@@ -523,6 +523,5 @@ If you find this repository helpful, please consider giving it a star! ⭐
 
 ---
 
-Made by [Your Name] • [GitHub](https://github.com/yourusername) • [LinkedIn](https://linkedin.com/in/yourprofile)
 
 </div>
