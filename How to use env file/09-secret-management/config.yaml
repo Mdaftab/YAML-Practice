@@ -1,0 +1,34 @@
+# ============================================
+# Configuration with Secret References
+# ============================================
+# Note: Actual secrets are in .env file (not committed)
+
+database:
+  host: "${DB_HOST}"
+  port: "${DB_PORT}"
+  name: "${DB_NAME}"
+  username: "${DB_USER}"
+  password: "${DB_PASSWORD}"
+
+services:
+  stripe:
+    api_key: "${STRIPE_API_KEY}"
+  
+  sendgrid:
+    api_key: "${SENDGRID_API_KEY}"
+  
+  aws:
+    access_key: "${AWS_ACCESS_KEY}"
+    secret_key: "${AWS_SECRET_KEY}"
+
+security:
+  jwt:
+    secret: "${JWT_SECRET}"
+  encryption:
+    key: "${ENCRYPTION_KEY}"
+
+email:
+  smtp:
+    username: "${SMTP_USERNAME}"
+    password: "${SMTP_PASSWORD}"
+

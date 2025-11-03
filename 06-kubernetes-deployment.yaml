@@ -1,0 +1,366 @@
+# ============================================
+# YAML Practice: Kubernetes Deployment
+# ============================================
+# This demonstrates Kubernetes resource definitions
+# Common patterns for deploying applications to K8s
+
+# ---
+# Deployment: Defines how to run your application
+# ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-deployment
+  namespace: production
+  labels:
+    app: myapp
+    version: v1.2.3
+    environment: production
+  annotations:
+    description: "Main application deployment"
+    deployment.kubernetes.io/revision: "1"
+
+spec:
+  # Number of replicas (pods)
+  replicas: 3
+  
+  # Strategy for rolling updates
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # Maximum pods that can be created above desired
+      maxUnavailable: 0  # Maximum pods that can be unavailable during update
+  
+  # Selector to match pods
+  selector:
+    matchLabels:
+      app: myapp
+      tier: frontend
+  
+  # Pod template
+  template:
+    metadata:
+      labels:
+        app: myapp
+        tier: frontend
+        version: v1.2.3
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    
+    spec:
+      # Container definitions
+      containers:
+        # Main application container
+        - name: app
+          image: myapp:1.2.3
+          imagePullPolicy: IfNotPresent
+          
+          # Ports exposed by container
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          
+          # Environment variables
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: database-url
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: api-secret
+                  key: api-key
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: log-level
+          
+          # Environment variables from ConfigMap
+          envFrom:
+            - configMapRef:
+                name: app-config
+          
+          # Resource limits and requests
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          
+          # Health checks
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          
+          # Startup probe (for slow-starting containers)
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+          
+          # Volume mounts
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/app/config
+              readOnly: true
+            - name: cache-volume
+              mountPath: /var/cache/app
+      
+      # Init containers (run before main containers)
+      initContainers:
+        - name: init-db
+          image: busybox:1.35
+          command: ['sh', '-c', 'echo "Initializing database..."']
+      
+      # Volumes
+      volumes:
+        - name: config-volume
+          configMap:
+            name: app-config
+        - name: cache-volume
+          emptyDir: {}
+      
+      # Image pull secrets (for private registries)
+      imagePullSecrets:
+        - name: registry-secret
+      
+      # Restart policy
+      restartPolicy: Always
+      
+      # DNS configuration
+      dnsPolicy: ClusterFirst
+      
+      # Security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
+
+---
+# Service: Exposes the deployment internally/externally
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+  namespace: production
+  labels:
+    app: myapp
+spec:
+  type: LoadBalancer  # Options: ClusterIP, NodePort, LoadBalancer, ExternalName
+  
+  # Ports to expose
+  ports:
+    - name: http
+      port: 80          # Service port
+      targetPort: http  # Container port (by name)
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: 8080
+      protocol: TCP
+  
+  # Selector to match pods
+  selector:
+    app: myapp
+    tier: frontend
+  
+  # Session affinity
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+
+---
+# ConfigMap: Configuration data
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: production
+data:
+  # Key-value pairs
+  log-level: "info"
+  api-timeout: "30"
+  max-connections: "1000"
+  
+  # Multi-line configuration file
+  nginx.conf: |
+    server {
+        listen 80;
+        server_name example.com;
+        
+        location / {
+            proxy_pass http://localhost:8080;
+        }
+    }
+  
+  # JSON configuration
+  app.json: |
+    {
+      "features": {
+        "newDashboard": true,
+        "betaFeatures": false
+      }
+    }
+
+---
+# Secret: Sensitive data (base64 encoded)
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-secret
+  namespace: production
+type: Opaque
+data:
+  # Base64 encoded values
+  # To create: echo -n 'your-value' | base64
+  database-url: cG9zdGdyZXNxbDovL3VzZXI6cGFzcy@bG9jYWxob3N0L2Ri
+  username: dXNlcg==
+  password: cGFzc3dvcmQ=
+
+---
+# Ingress: External HTTP/HTTPS access
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: myapp-ingress
+  namespace: production
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  # TLS configuration
+  tls:
+    - hosts:
+        - example.com
+        - www.example.com
+      secretName: myapp-tls-secret
+  
+  # Rules for routing
+  rules:
+    - host: example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: myapp-service
+                port:
+                  number: 80
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: api-service
+                port:
+                  number: 8080
+
+---
+# HorizontalPodAutoscaler: Auto-scaling
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: myapp-hpa
+  namespace: production
+spec:
+  # Target deployment
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: myapp-deployment
+  
+  # Min and max replicas
+  minReplicas: 3
+  maxReplicas: 10
+  
+  # Metrics for scaling
+  metrics:
+    # CPU-based scaling
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    
+    # Memory-based scaling
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  
+  # Behavior configuration
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+        - type: Pods
+          value: 4
+          periodSeconds: 15
+      selectPolicy: Max
+
+---
+# PersistentVolumeClaim: Storage
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: app-storage
+  namespace: production
+spec:
+  accessModes:
+    - ReadWriteOnce  # Options: ReadWriteOnce, ReadOnlyMany, ReadWriteMany
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 10Gi  # Request 10GB of storage
+

@@ -1,0 +1,174 @@
+# ============================================
+# Production Environment Deployment
+# ============================================
+# This deployment uses production-specific ConfigMaps and Secrets
+# Created from .env.production file
+# NOTE: Use proper secret management (AWS Secrets Manager, Vault, etc.) in production
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-production
+  namespace: production
+  labels:
+    app: myapp
+    environment: production
+spec:
+  replicas: 5  # More replicas for production
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: myapp
+      environment: production
+  template:
+    metadata:
+      labels:
+        app: myapp
+        environment: production
+    spec:
+      containers:
+      - name: app
+        image: myapp:production-v1.0.0
+        imagePullPolicy: IfNotPresent
+        
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: metrics
+          containerPort: 9090
+        
+        # ============================================
+        # Production Environment Variables
+        # ============================================
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: myapp-prod-config
+              key: node-env
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: myapp-prod-config
+              key: log-level
+        - name: API_BASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: myapp-prod-config
+              key: api-base-url
+        - name: MAX_CONNECTIONS
+          valueFrom:
+            configMapKeyRef:
+              name: myapp-prod-config
+              key: max-connections
+        
+        # ============================================
+        # Production Secrets (CRITICAL - Use proper secret management)
+        # ============================================
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: myapp-prod-secrets
+              key: database-url
+              optional: false  # Required - fail if missing
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: myapp-prod-secrets
+              key: api-key
+              optional: false
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: myapp-prod-secrets
+              key: jwt-secret
+              optional: false
+        - name: STRIPE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: myapp-prod-secrets
+              key: stripe-api-key
+              optional: false
+        
+        envFrom:
+        - configMapRef:
+            name: myapp-prod-config
+        - secretRef:
+            name: myapp-prod-secrets
+        
+        # ============================================
+        # Production Resource Limits
+        # ============================================
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        
+        # ============================================
+        # Health Checks
+        # ============================================
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+---
+# ============================================
+# Production ConfigMap
+# ============================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: myapp-prod-config
+  namespace: production
+data:
+  node-env: "production"
+  log-level: "warn"
+  api-base-url: "https://api.example.com"
+  debug-mode: "false"
+  cache-enabled: "true"
+  max-connections: "1000"
+  cache-ttl: "7200"
+
+---
+# ============================================
+# Production Secret
+# ============================================
+# WARNING: In production, use proper secret management tools:
+# - AWS Secrets Manager
+# - HashiCorp Vault
+# - Azure Key Vault
+# - Google Secret Manager
+# - Sealed Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: myapp-prod-secrets
+  namespace: production
+type: Opaque
+stringData:
+  database-url: "postgresql://prod_user:secure_prod_password@prod-db:5432/myapp_prod"
+  api-key: "prod_api_key_secure_abc123xyz"
+  jwt-secret: "very_secure_production_jwt_secret_min_32_chars"
+  stripe-api-key: "sk_live_production_stripe_key"
+

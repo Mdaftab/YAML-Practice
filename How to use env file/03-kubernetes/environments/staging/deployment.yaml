@@ -1,0 +1,118 @@
+# ============================================
+# Staging Environment Deployment
+# ============================================
+# This deployment uses staging-specific ConfigMaps and Secrets
+# Created from .env.staging file
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-staging
+  namespace: staging
+  labels:
+    app: myapp
+    environment: staging
+spec:
+  replicas: 2  # More replicas for staging
+  selector:
+    matchLabels:
+      app: myapp
+      environment: staging
+  template:
+    metadata:
+      labels:
+        app: myapp
+        environment: staging
+    spec:
+      containers:
+      - name: app
+        image: myapp:staging-latest
+        imagePullPolicy: Always  # Always pull latest in staging
+        
+        ports:
+        - containerPort: 8080
+        
+        # ============================================
+        # Environment Variables from Staging ConfigMap
+        # ============================================
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: myapp-staging-config
+              key: node-env
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: myapp-staging-config
+              key: log-level
+        - name: API_BASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: myapp-staging-config
+              key: api-base-url
+        
+        # ============================================
+        # Secrets from Staging Secret
+        # ============================================
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: myapp-staging-secrets
+              key: database-url
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: myapp-staging-secrets
+              key: api-key
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: myapp-staging-secrets
+              key: jwt-secret
+        
+        envFrom:
+        - configMapRef:
+            name: myapp-staging-config
+        - secretRef:
+            name: myapp-staging-secrets
+        
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+
+---
+# ============================================
+# Staging ConfigMap
+# ============================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: myapp-staging-config
+  namespace: staging
+data:
+  node-env: "staging"
+  log-level: "info"
+  api-base-url: "https://staging-api.example.com"
+  debug-mode: "false"
+  cache-enabled: "true"
+
+---
+# ============================================
+# Staging Secret
+# ============================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: myapp-staging-secrets
+  namespace: staging
+type: Opaque
+stringData:
+  database-url: "postgresql://staging_user:staging_pass@staging-db:5432/myapp_staging"
+  api-key: "staging_api_key_xyz789"
+  jwt-secret: "staging_jwt_secret_secure"
+

@@ -1,0 +1,302 @@
+# ============================================
+# Complex Kubernetes Deployment Example
+# ============================================
+# This demonstrates advanced usage with:
+# - Multiple ConfigMaps
+# - Multiple Secrets
+# - envFrom for bulk loading
+# - Optional vs Required variables
+# - Init containers with env vars
+# - Sidecar containers
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: complex-app
+  namespace: default
+  labels:
+    app: complex-app
+    version: v1.0.0
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: complex-app
+  template:
+    metadata:
+      labels:
+        app: complex-app
+    spec:
+      # ============================================
+      # Init Container (runs before main container)
+      # ============================================
+      initContainers:
+      - name: init-db
+        image: busybox:1.35
+        command: ['sh', '-c', 'echo "Initializing database connection..."']
+        env:
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: db-host
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: db-user
+      
+      # ============================================
+      # Main Application Container
+      # ============================================
+      containers:
+      - name: app
+        image: complex-app:latest
+        imagePullPolicy: IfNotPresent
+        
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: metrics
+          containerPort: 9090
+        
+        # ============================================
+        # Complex Environment Variable Configuration
+        # ============================================
+        
+        # Method 1: Individual env vars from ConfigMap (selective)
+        env:
+        # From main ConfigMap
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: node-env
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: log-level
+        - name: API_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: api-timeout
+        
+        # From feature flags ConfigMap
+        - name: FEATURE_PAYMENTS
+          valueFrom:
+            configMapKeyRef:
+              name: feature-flags
+              key: enable-payments
+        - name: FEATURE_ANALYTICS
+          valueFrom:
+            configMapKeyRef:
+              name: feature-flags
+              key: enable-analytics
+        
+        # From database secrets (required)
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: database-url
+              optional: false  # Will fail if not found
+        - name: DB_POOL_SIZE
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: pool-size
+              optional: true  # Won't fail if missing
+        
+        # From API secrets
+        - name: STRIPE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: api-secrets
+              key: stripe-api-key
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: api-secrets
+              key: jwt-secret
+        
+        # Computed/derived values
+        - name: APP_VERSION
+          value: "1.0.0"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        
+        # ============================================
+        # Method 2: Bulk loading with envFrom
+        # ============================================
+        # Loads ALL keys from ConfigMap/Secret as env vars
+        # Prefix can be added to avoid conflicts
+        envFrom:
+        # Load all keys from app-config ConfigMap
+        - configMapRef:
+            name: app-config
+        # Load all keys from feature-flags ConfigMap with prefix
+        - configMapRef:
+            name: feature-flags
+            # Optional: prefix all keys
+            # prefix: FEATURE_
+        # Load all keys from api-secrets Secret
+        - secretRef:
+            name: api-secrets
+        
+        # ============================================
+        # Resource Limits
+        # ============================================
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        
+        # ============================================
+        # Health Checks (using env vars)
+        # ============================================
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        
+        # ============================================
+        # Volume Mounts (for config files)
+        # ============================================
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/app/config
+          readOnly: true
+      
+      # ============================================
+      # Sidecar Container (helper container)
+      # ============================================
+      # Note: Sidecar containers are added to the same containers array
+      # For demonstration, showing how sidecars would access env vars:
+      #
+      # - name: sidecar-logger
+      #   image: fluent-bit:latest
+      #   env:
+      #   - name: LOG_LEVEL
+      #     valueFrom:
+      #       configMapKeyRef:
+      #         name: app-config
+      #         key: log-level
+      #   - name: LOG_ENDPOINT
+      #     valueFrom:
+      #       secretKeyRef:
+      #         name: logging-secrets
+      #         key: endpoint
+      
+      # ============================================
+      # Volumes (from ConfigMap)
+      # ============================================
+      volumes:
+      - name: config-volume
+        configMap:
+          name: app-config
+
+---
+# ============================================
+# Multiple ConfigMaps for Different Concerns
+# ============================================
+
+# Main Application Config
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  node-env: "production"
+  log-level: "info"
+  api-timeout: "30"
+  max-connections: "1000"
+  cache-ttl: "3600"
+  # Config file as data
+  app.yaml: |
+    server:
+      port: 8080
+      timeout: 30
+    database:
+      pool:
+        min: 5
+        max: 20
+
+---
+# Feature Flags ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: feature-flags
+data:
+  enable-payments: "true"
+  enable-analytics: "true"
+  enable-beta-features: "false"
+  maintenance-mode: "false"
+
+---
+# ============================================
+# Multiple Secrets for Different Services
+# ============================================
+
+# Database Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-secrets
+type: Opaque
+stringData:
+  database-url: "postgresql://user:password@db:5432/myapp"
+  db-host: "db.example.com"
+  db-user: "db_user"
+  db-password: "secure_password"
+  pool-size: "20"
+
+---
+# API Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: api-secrets
+type: Opaque
+stringData:
+  stripe-api-key: "sk_live_abc123..."
+  stripe-webhook-secret: "whsec_xyz789..."
+  jwt-secret: "very_secure_jwt_secret_key"
+  api-key: "api_key_secure_12345"
+
+---
+# Logging Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: logging-secrets
+type: Opaque
+stringData:
+  endpoint: "https://logs.example.com/api"
+  api-key: "logging_api_key_123"
+

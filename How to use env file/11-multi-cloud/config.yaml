@@ -1,0 +1,27 @@
+# ============================================
+# Multi-Cloud Configuration
+# ============================================
+# Same application deployed to different cloud providers
+
+storage:
+  provider: "${STORAGE_PROVIDER:-s3}"
+  bucket: "${STORAGE_BUCKET}"
+  region: "${STORAGE_REGION}"
+  access_key: "${STORAGE_ACCESS_KEY}"
+  secret_key: "${STORAGE_SECRET_KEY}"
+  endpoint: "${STORAGE_ENDPOINT:-}"
+
+database:
+  provider: "${DB_PROVIDER:-postgresql}"
+  host: "${DB_HOST}"
+  port: "${DB_PORT:-5432}"
+  name: "${DB_NAME}"
+  username: "${DB_USER}"
+  password: "${DB_PASSWORD}"
+
+cache:
+  provider: "${CACHE_PROVIDER:-redis}"
+  host: "${CACHE_HOST}"
+  port: "${CACHE_PORT:-6379}"
+  url: "${CACHE_URL}"
+

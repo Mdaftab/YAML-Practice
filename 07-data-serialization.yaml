@@ -1,0 +1,418 @@
+# ============================================
+# YAML Practice: Data Serialization Examples
+# ============================================
+# This demonstrates various data structures and serialization patterns
+# Useful for representing complex data in YAML format
+
+# ---
+# 1. E-COMMERCE PRODUCT CATALOG
+# ---
+products:
+  - id: PROD001
+    name: "Wireless Bluetooth Headphones"
+    category: "Electronics"
+    subcategory: "Audio"
+    price: 99.99
+    currency: USD
+    description: |
+      High-quality wireless headphones with noise cancellation,
+      long battery life, and premium sound quality.
+    specifications:
+      brand: "TechAudio"
+      model: "TA-2024"
+      color_options:
+        - Black
+        - White
+        - Blue
+      features:
+        - "Active Noise Cancellation"
+        - "30-hour battery life"
+        - "Quick charge (5 min = 3 hours)"
+        - "Water resistant (IPX4)"
+      dimensions:
+        weight: "250g"
+        length: "20cm"
+        width: "18cm"
+        height: "8cm"
+    inventory:
+      stock: 150
+      low_stock_threshold: 20
+      sku: "TA-2024-BLK"
+    ratings:
+      average: 4.5
+      total_reviews: 1247
+      distribution:
+        5: 850
+        4: 300
+        3: 80
+        2: 15
+        1: 2
+    tags:
+      - headphones
+      - wireless
+      - bluetooth
+      - audio
+      - premium
+  
+  - id: PROD002
+    name: "Smart Watch Pro"
+    category: "Wearables"
+    price: 299.99
+    currency: USD
+    description: "Advanced fitness tracking and smartwatch features"
+    specifications:
+      brand: "TechWear"
+      model: "TW-Pro-2024"
+      features:
+        - "Heart rate monitoring"
+        - "GPS tracking"
+        - "Water resistant (50m)"
+        - "7-day battery"
+    inventory:
+      stock: 45
+      low_stock_threshold: 10
+
+# ---
+# 2. USER PROFILE DATA
+# ---
+users:
+  - user_id: "USR-001"
+    personal_info:
+      first_name: "Sarah"
+      last_name: "Johnson"
+      email: "sarah.johnson@example.com"
+      phone: "+1-555-0123"
+      date_of_birth: "1990-05-15"
+      gender: "Female"
+    
+    address:
+      street: "123 Main Street"
+      city: "San Francisco"
+      state: "CA"
+      zip_code: "94102"
+      country: "USA"
+      coordinates:
+        latitude: 37.7749
+        longitude: -122.4194
+    
+    preferences:
+      language: "en-US"
+      timezone: "America/Los_Angeles"
+      currency: "USD"
+      theme: "dark"
+      notifications:
+        email: true
+        push: true
+        sms: false
+        marketing: false
+    
+    subscription:
+      plan: "premium"
+      status: "active"
+      start_date: "2024-01-01"
+      renewal_date: "2024-02-01"
+      billing_cycle: "monthly"
+      price: 29.99
+    
+    social_links:
+      twitter: "@sarahjohnson"
+      linkedin: "sarah-johnson"
+      github: "sarahj"
+
+# ---
+# 3. RESTAURANT MENU
+# ---
+restaurant_menu:
+  restaurant_name: "Bella Italia"
+  cuisine_type: "Italian"
+  last_updated: "2024-01-15"
+  
+  categories:
+    - name: "Appetizers"
+      items:
+        - name: "Bruschetta"
+          description: "Toasted bread with tomatoes, garlic, and basil"
+          price: 8.99
+          vegetarian: true
+          gluten_free: false
+          allergens:
+            - gluten
+            - dairy
+          calories: 180
+        
+        - name: "Antipasto Platter"
+          description: "Selection of Italian cured meats and cheeses"
+          price: 15.99
+          vegetarian: false
+          gluten_free: true
+          allergens:
+            - dairy
+          calories: 320
+    
+    - name: "Main Courses"
+      items:
+        - name: "Spaghetti Carbonara"
+          description: "Classic Roman pasta with eggs, cheese, and pancetta"
+          price: 18.99
+          vegetarian: false
+          gluten_free: false
+          allergens:
+            - gluten
+            - eggs
+            - dairy
+          calories: 650
+        
+        - name: "Margherita Pizza"
+          description: "Traditional pizza with tomato, mozzarella, and basil"
+          price: 14.99
+          vegetarian: true
+          gluten_free: false
+          allergens:
+            - gluten
+            - dairy
+          calories: 800
+    
+    - name: "Desserts"
+      items:
+        - name: "Tiramisu"
+          description: "Classic Italian dessert with coffee and mascarpone"
+          price: 7.99
+          vegetarian: true
+          gluten_free: false
+          allergens:
+            - gluten
+            - eggs
+            - dairy
+          calories: 420
+
+# ---
+# 4. PROJECT MANAGEMENT DATA
+# ---
+project:
+  id: "PROJ-2024-001"
+  name: "Website Redesign"
+  status: "in-progress"
+  priority: "high"
+  
+  timeline:
+    start_date: "2024-01-01"
+    end_date: "2024-03-31"
+    milestones:
+      - name: "Design Phase Complete"
+        date: "2024-01-31"
+        status: "completed"
+      - name: "Development Phase Complete"
+        date: "2024-02-28"
+        status: "in-progress"
+      - name: "Testing Phase"
+        date: "2024-03-15"
+        status: "pending"
+      - name: "Launch"
+        date: "2024-03-31"
+        status: "pending"
+  
+  team:
+    project_manager:
+      name: "John Smith"
+      email: "john.smith@example.com"
+      role: "Project Manager"
+    
+    developers:
+      - name: "Alice Johnson"
+        email: "alice.johnson@example.com"
+        role: "Frontend Developer"
+        skills:
+          - React
+          - TypeScript
+          - CSS
+      - name: "Bob Williams"
+        email: "bob.williams@example.com"
+        role: "Backend Developer"
+        skills:
+          - Node.js
+          - Python
+          - PostgreSQL
+  
+  budget:
+    total: 50000
+    currency: "USD"
+    breakdown:
+      design: 10000
+      development: 25000
+      testing: 8000
+      marketing: 7000
+    spent: 32000
+    remaining: 18000
+  
+  tasks:
+    - id: "TASK-001"
+      title: "Create wireframes"
+      assignee: "Alice Johnson"
+      status: "completed"
+      priority: "high"
+      due_date: "2024-01-10"
+      tags:
+        - design
+        - frontend
+    
+    - id: "TASK-002"
+      title: "Set up development environment"
+      assignee: "Bob Williams"
+      status: "completed"
+      priority: "high"
+      due_date: "2024-01-05"
+      tags:
+        - setup
+        - backend
+    
+    - id: "TASK-003"
+      title: "Implement user authentication"
+      assignee: "Bob Williams"
+      status: "in-progress"
+      priority: "high"
+      due_date: "2024-02-15"
+      tags:
+        - backend
+        - security
+
+# ---
+# 5. SCIENTIFIC DATA
+# ---
+experiment_data:
+  experiment_id: "EXP-2024-001"
+  title: "Temperature Effects on Plant Growth"
+  researcher: "Dr. Jane Doe"
+  institution: "University of Science"
+  start_date: "2024-01-01"
+  end_date: "2024-03-31"
+  
+  methodology:
+    sample_size: 100
+    control_group: 25
+    treatment_groups: 3
+    variables:
+      independent: "Temperature (Celsius)"
+      dependent: "Plant height (cm)"
+  
+  data_points:
+    - date: "2024-01-15"
+      temperature: 20
+      measurements:
+        control:
+          average_height: 15.2
+          std_deviation: 1.3
+          sample_count: 25
+        treatment_1:
+          average_height: 18.5
+          std_deviation: 1.5
+          sample_count: 25
+        treatment_2:
+          average_height: 22.1
+          std_deviation: 1.8
+          sample_count: 25
+        treatment_3:
+          average_height: 19.8
+          std_deviation: 1.4
+          sample_count: 25
+    
+    - date: "2024-02-15"
+      temperature: 22
+      measurements:
+        control:
+          average_height: 18.5
+          std_deviation: 1.4
+        treatment_1:
+          average_height: 22.3
+          std_deviation: 1.6
+        treatment_2:
+          average_height: 26.8
+          std_deviation: 2.1
+        treatment_3:
+          average_height: 24.2
+          std_deviation: 1.7
+  
+  conclusions: |
+    The experiment demonstrates a positive correlation between
+    temperature and plant growth within the tested range (20-25°C).
+    Treatment 2 showed the most significant growth improvement.
+
+# ---
+# 6. GAME CONFIGURATION
+# ---
+game_config:
+  game_name: "Space Adventure"
+  version: "1.5.2"
+  
+  player:
+    default_stats:
+      health: 100
+      max_health: 100
+      energy: 50
+      max_energy: 50
+      level: 1
+      experience: 0
+      experience_to_next_level: 100
+  
+  weapons:
+    - name: "Laser Pistol"
+      type: "energy"
+      damage: 25
+      range: 50
+      ammo_capacity: 30
+      rarity: "common"
+      cost: 100
+      unlock_level: 1
+    
+    - name: "Plasma Rifle"
+      type: "energy"
+      damage: 45
+      range: 75
+      ammo_capacity: 20
+      rarity: "rare"
+      cost: 500
+      unlock_level: 5
+  
+  enemies:
+    - name: "Alien Drone"
+      health: 30
+      damage: 10
+      speed: 5
+      experience_reward: 25
+      loot_drops:
+        - item: "Energy Cell"
+          drop_chance: 0.3
+        - item: "Alien Scrap"
+          drop_chance: 0.7
+    
+    - name: "Alien Warrior"
+      health: 80
+      damage: 25
+      speed: 3
+      experience_reward: 75
+      loot_drops:
+        - item: "Plasma Core"
+          drop_chance: 0.5
+        - item: "Alien Scrap"
+          drop_chance: 0.9
+  
+  levels:
+    - level_number: 1
+      name: "Space Station Alpha"
+      difficulty: "easy"
+      enemies:
+        - type: "Alien Drone"
+          count: 5
+      reward_experience: 100
+      reward_credits: 50
+    
+    - level_number: 2
+      name: "Alien Planet"
+      difficulty: "medium"
+      enemies:
+        - type: "Alien Drone"
+          count: 8
+        - type: "Alien Warrior"
+          count: 2
+      reward_experience: 250
+      reward_credits: 150
+

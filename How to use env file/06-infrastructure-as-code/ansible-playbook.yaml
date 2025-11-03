@@ -1,0 +1,32 @@
+# ============================================
+# Ansible Playbook with Environment Variables
+# ============================================
+---
+- hosts: webservers
+  vars:
+    db_host: "{{ lookup('env', 'DB_HOST') }}"
+    db_user: "{{ lookup('env', 'DB_USER') }}"
+    db_password: "{{ lookup('env', 'DB_PASSWORD') }}"
+    api_key: "{{ lookup('env', 'API_KEY') }}"
+  
+  tasks:
+    - name: Create config directory
+      file:
+        path: /etc/myapp
+        state: directory
+    
+    - name: Generate config.yaml from template
+      template:
+        src: config.yaml.j2
+        dest: /etc/myapp/config.yaml
+      vars:
+        db_host: "{{ db_host }}"
+        db_user: "{{ db_user }}"
+        db_password: "{{ db_password }}"
+        api_key: "{{ api_key }}"
+    
+    - name: Restart application
+      systemd:
+        name: myapp
+        state: restarted
+

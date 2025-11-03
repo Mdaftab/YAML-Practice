@@ -1,0 +1,273 @@
+# ============================================
+# YAML Practice: API Specification (OpenAPI-like)
+# ============================================
+# This demonstrates an API specification in YAML format
+# Similar to OpenAPI/Swagger specifications
+
+# API Information
+api:
+  name: "User Management API"
+  version: "v1"
+  description: |
+    RESTful API for managing users, authentication,
+    and user-related operations.
+  
+  base_url: "https://api.example.com/v1"
+  protocol: https
+
+# API Endpoints
+endpoints:
+  # Authentication Endpoints
+  authentication:
+    # Login endpoint
+    login:
+      method: POST
+      path: "/auth/login"
+      description: "Authenticate user and receive access token"
+      request:
+        content_type: "application/json"
+        body:
+          username:
+            type: string
+            required: true
+            example: "john.doe@example.com"
+          password:
+            type: string
+            required: true
+            format: password
+            example: "SecurePassword123!"
+        headers:
+          Content-Type: "application/json"
+      response:
+        success:
+          status_code: 200
+          body:
+            access_token:
+              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            token_type:
+              type: string
+              example: "Bearer"
+            expires_in:
+              type: integer
+              example: 3600
+        error:
+          - status_code: 401
+            message: "Invalid credentials"
+          - status_code: 400
+            message: "Missing required fields"
+    
+    # Logout endpoint
+    logout:
+      method: POST
+      path: "/auth/logout"
+      description: "Invalidate user session"
+      authentication: required
+      response:
+        success:
+          status_code: 200
+          message: "Successfully logged out"
+  
+  # User Management Endpoints
+  users:
+    # Get all users
+    list_users:
+      method: GET
+      path: "/users"
+      description: "Retrieve list of all users"
+      authentication: required
+      query_parameters:
+        page:
+          type: integer
+          required: false
+          default: 1
+          description: "Page number for pagination"
+        limit:
+          type: integer
+          required: false
+          default: 10
+          description: "Number of items per page"
+        sort:
+          type: string
+          required: false
+          enum: [name, email, created_at]
+          default: created_at
+      response:
+        success:
+          status_code: 200
+          body:
+            data:
+              type: array
+              items:
+                type: object
+                properties:
+                  id: integer
+                  name: string
+                  email: string
+                  created_at: datetime
+    
+    # Get single user
+    get_user:
+      method: GET
+      path: "/users/{id}"
+      description: "Retrieve user by ID"
+      authentication: required
+      path_parameters:
+        id:
+          type: integer
+          required: true
+          description: "User ID"
+      response:
+        success:
+          status_code: 200
+          body:
+            id:
+              type: integer
+              example: 1
+            name:
+              type: string
+              example: "John Doe"
+            email:
+              type: string
+              example: "john.doe@example.com"
+            profile:
+              type: object
+              properties:
+                avatar_url: string
+                bio: string
+                location: string
+            created_at:
+              type: datetime
+              example: "2024-01-15T10:30:00Z"
+    
+    # Create user
+    create_user:
+      method: POST
+      path: "/users"
+      description: "Create a new user account"
+      authentication: required
+      request:
+        content_type: "application/json"
+        body:
+          name:
+            type: string
+            required: true
+            min_length: 2
+            max_length: 100
+            example: "Jane Smith"
+          email:
+            type: string
+            required: true
+            format: email
+            example: "jane.smith@example.com"
+          password:
+            type: string
+            required: true
+            min_length: 8
+            format: password
+            example: "SecurePass123!"
+          role:
+            type: string
+            required: false
+            enum: [user, admin, moderator]
+            default: user
+      response:
+        success:
+          status_code: 201
+          body:
+            id: integer
+            name: string
+            email: string
+            created_at: datetime
+    
+    # Update user
+    update_user:
+      method: PUT
+      path: "/users/{id}"
+      description: "Update user information"
+      authentication: required
+      path_parameters:
+        id:
+          type: integer
+          required: true
+      request:
+        body:
+          name:
+            type: string
+            required: false
+          email:
+            type: string
+            required: false
+            format: email
+          profile:
+            type: object
+            required: false
+      response:
+        success:
+          status_code: 200
+          body:
+            id: integer
+            name: string
+            email: string
+            updated_at: datetime
+    
+    # Delete user
+    delete_user:
+      method: DELETE
+      path: "/users/{id}"
+      description: "Delete a user account"
+      authentication: required
+      permissions: [admin]
+      path_parameters:
+        id:
+          type: integer
+          required: true
+      response:
+        success:
+          status_code: 204
+          message: "User deleted successfully"
+
+# Error Responses (Common across all endpoints)
+error_responses:
+  - status_code: 400
+    name: "Bad Request"
+    description: "Invalid request parameters"
+    example:
+      error: "Bad Request"
+      message: "Invalid input data"
+      details: {}
+  
+  - status_code: 401
+    name: "Unauthorized"
+    description: "Missing or invalid authentication"
+    example:
+      error: "Unauthorized"
+      message: "Authentication required"
+  
+  - status_code: 403
+    name: "Forbidden"
+    description: "Insufficient permissions"
+    example:
+      error: "Forbidden"
+      message: "You don't have permission to perform this action"
+  
+  - status_code: 404
+    name: "Not Found"
+    description: "Resource not found"
+    example:
+      error: "Not Found"
+      message: "The requested resource was not found"
+  
+  - status_code: 500
+    name: "Internal Server Error"
+    description: "Server error"
+    example:
+      error: "Internal Server Error"
+      message: "An unexpected error occurred"
+
+# Rate Limiting
+rate_limits:
+  default: "100 requests per hour"
+  authenticated: "1000 requests per hour"
+  admin: "10000 requests per hour"
+

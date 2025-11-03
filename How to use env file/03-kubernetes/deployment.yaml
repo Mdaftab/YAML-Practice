@@ -1,0 +1,90 @@
+# ============================================
+# Kubernetes Deployment with ConfigMap and Secrets
+# ============================================
+# This shows how to use environment variables in K8s
+# via ConfigMaps and Secrets (created from .env files)
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-deployment
+  namespace: default
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: app
+        image: myapp:latest
+        ports:
+        - containerPort: 8080
+        
+        # Environment variables from ConfigMap
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: node-env
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: log-level
+        - name: API_BASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: api-base-url
+        
+        # Environment variables from Secrets
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: database-url
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: api-key
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: jwt-secret
+        
+        # Load all keys from ConfigMap
+        envFrom:
+        - configMapRef:
+            name: app-config
+        - secretRef:
+            name: app-secrets
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  node-env: "production"
+  log-level: "info"
+  api-base-url: "https://api.example.com"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+type: Opaque
+stringData:
+  database-url: "postgresql://user:password@db:5432/myapp"
+  api-key: "your-api-key-here"
+  jwt-secret: "your-jwt-secret-here"
+

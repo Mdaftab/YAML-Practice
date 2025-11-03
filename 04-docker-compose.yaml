@@ -1,0 +1,259 @@
+# ============================================
+# YAML Practice: Docker Compose Configuration
+# ============================================
+# This demonstrates a multi-container Docker Compose setup
+# Common pattern for orchestrating multiple services
+
+# Docker Compose Version
+version: '3.8'
+
+# Services (Containers)
+services:
+  # Web Application Service
+  web:
+    # Image to use
+    image: nginx:alpine
+    # Alternative: build from Dockerfile
+    # build:
+    #   context: ./web
+    #   dockerfile: Dockerfile
+    
+    # Container name
+    container_name: myapp_web
+    
+    # Port mapping (host:container)
+    ports:
+      - "80:80"
+      - "443:443"
+    
+    # Environment variables
+    environment:
+      - NODE_ENV=production
+      - API_URL=http://api:3000
+      - REDIS_URL=redis://redis:6379
+    
+    # Environment file (alternative to inline env vars)
+    env_file:
+      - .env
+      - .env.production
+    
+    # Volume mounts (persistent data)
+    volumes:
+      - ./web/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./web/static:/usr/share/nginx/html:ro
+      - ./logs:/var/log/nginx
+    
+    # Dependencies (start these services first)
+    depends_on:
+      - api
+      - redis
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+  
+  # API Service
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
+    
+    container_name: myapp_api
+    
+    ports:
+      - "3000:3000"
+    
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/myapp
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+    
+    volumes:
+      - ./api:/app
+      - /app/node_modules  # Exclude node_modules from host mount
+    
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    
+    restart: unless-stopped
+    
+    networks:
+      - backend
+    
+    command: ["npm", "start"]
+  
+  # Database Service
+  db:
+    image: postgres:15-alpine
+    
+    container_name: myapp_db
+    
+    # Don't expose ports to host (only accessible from other containers)
+    # ports:
+    #   - "5432:5432"
+    
+    environment:
+      POSTGRES_DB: myapp
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+    
+    volumes:
+      # Named volume (managed by Docker)
+      - postgres_data:/var/lib/postgresql/data
+      # Init scripts
+      - ./db/init:/docker-entrypoint-initdb.d
+    
+    restart: unless-stopped
+    
+    networks:
+      - backend
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d myapp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+  # Redis Cache Service
+  redis:
+    image: redis:7-alpine
+    
+    container_name: myapp_redis
+    
+    ports:
+      - "6379:6379"
+    
+    volumes:
+      - redis_data:/data
+    
+    command: redis-server --appendonly yes
+    
+    restart: unless-stopped
+    
+    networks:
+      - backend
+    
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+  
+  # Background Worker Service
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    
+    container_name: myapp_worker
+    
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/myapp
+      - REDIS_URL=redis://redis:6379
+      - QUEUE_NAME=default
+    
+    volumes:
+      - ./worker:/app
+      - /app/node_modules
+    
+    depends_on:
+      - db
+      - redis
+    
+    restart: unless-stopped
+    
+    networks:
+      - backend
+    
+    command: ["npm", "run", "worker"]
+  
+  # Monitoring Service (Optional)
+  prometheus:
+    image: prom/prometheus:latest
+    
+    container_name: myapp_prometheus
+    
+    ports:
+      - "9090:9090"
+    
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    
+    restart: unless-stopped
+    
+    networks:
+      - monitoring
+
+# Networks (Logical grouping of services)
+networks:
+  # Default network (all services can communicate)
+  default:
+    driver: bridge
+  
+  # Backend network (isolated for backend services)
+  backend:
+    driver: bridge
+    internal: false  # Set to true to prevent external access
+  
+  # Monitoring network
+  monitoring:
+    driver: bridge
+
+# Volumes (Persistent data storage)
+volumes:
+  # Named volume for PostgreSQL data
+  postgres_data:
+    driver: local
+    # Optional: specify storage location
+    # driver_opts:
+    #   type: none
+    #   o: bind
+    #   device: ./data/postgres
+  
+  # Named volume for Redis data
+  redis_data:
+    driver: local
+  
+  # Named volume for Prometheus data
+  prometheus_data:
+    driver: local
+
+# Additional Configuration
+# Secrets (for sensitive data in Docker Swarm)
+# secrets:
+#   db_password:
+#     file: ./secrets/db_password.txt
+
+# Configs (for non-sensitive configuration files)
+# configs:
+#   nginx_config:
+#     file: ./web/nginx.conf
+

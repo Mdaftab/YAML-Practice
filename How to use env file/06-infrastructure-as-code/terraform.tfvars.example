@@ -1,0 +1,8 @@
+# Terraform Variables Example
+# Copy to terraform.tfvars and fill in values
+
+db_host = "your-db-host"
+db_user = "your-db-user"
+db_password = "your-db-password"
+api_key = "your-api-key"
+

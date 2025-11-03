@@ -1,0 +1,390 @@
+# ============================================
+# YAML Practice: Multi-Document YAML
+# ============================================
+# This file demonstrates multiple YAML documents in a single file
+# Documents are separated by "---" (three dashes)
+# Useful for grouping related configurations
+
+---
+# Document 1: Development Environment Configuration
+---
+environment: development
+debug: true
+log_level: debug
+
+database:
+  host: localhost
+  port: 5432
+  name: myapp_dev
+  username: dev_user
+  password: dev_password
+
+api:
+  base_url: "http://localhost:3000"
+  timeout: 30
+
+features:
+  enable_experimental: true
+  enable_analytics: false
+
+---
+# Document 2: Staging Environment Configuration
+---
+environment: staging
+debug: false
+log_level: info
+
+database:
+  host: staging-db.example.com
+  port: 5432
+  name: myapp_staging
+  username: "${STAGING_DB_USER}"
+  password: "${STAGING_DB_PASSWORD}"
+
+api:
+  base_url: "https://staging-api.example.com"
+  timeout: 30
+
+features:
+  enable_experimental: true
+  enable_analytics: true
+
+---
+# Document 3: Production Environment Configuration
+---
+environment: production
+debug: false
+log_level: warn
+
+database:
+  host: prod-db.example.com
+  port: 5432
+  name: myapp_production
+  username: "${PROD_DB_USER}"
+  password: "${PROD_DB_PASSWORD}"
+
+api:
+  base_url: "https://api.example.com"
+  timeout: 30
+
+features:
+  enable_experimental: false
+  enable_analytics: true
+
+---
+# Document 4: User Roles and Permissions
+---
+roles:
+  admin:
+    name: "Administrator"
+    permissions:
+      - "users.create"
+      - "users.read"
+      - "users.update"
+      - "users.delete"
+      - "system.configure"
+      - "system.admin"
+    description: "Full system access"
+  
+  moderator:
+    name: "Moderator"
+    permissions:
+      - "users.read"
+      - "users.update"
+      - "content.moderate"
+      - "reports.view"
+    description: "Content and user moderation"
+  
+  user:
+    name: "Regular User"
+    permissions:
+      - "users.read"
+      - "content.create"
+      - "content.read"
+      - "content.update"
+    description: "Standard user permissions"
+  
+  guest:
+    name: "Guest"
+    permissions:
+      - "content.read"
+    description: "Read-only access"
+
+---
+# Document 5: API Endpoints Configuration
+---
+endpoints:
+  public:
+    - path: "/api/public/health"
+      method: GET
+      auth_required: false
+      rate_limit: "100/hour"
+    
+    - path: "/api/public/status"
+      method: GET
+      auth_required: false
+      rate_limit: "100/hour"
+  
+  authenticated:
+    - path: "/api/users/me"
+      method: GET
+      auth_required: true
+      roles: ["user", "moderator", "admin"]
+      rate_limit: "1000/hour"
+    
+    - path: "/api/users"
+      method: GET
+      auth_required: true
+      roles: ["admin", "moderator"]
+      rate_limit: "500/hour"
+    
+    - path: "/api/users/{id}"
+      method: PUT
+      auth_required: true
+      roles: ["admin"]
+      rate_limit: "100/hour"
+  
+  admin:
+    - path: "/api/admin/system"
+      method: GET
+      auth_required: true
+      roles: ["admin"]
+      rate_limit: "50/hour"
+    
+    - path: "/api/admin/users"
+      method: DELETE
+      auth_required: true
+      roles: ["admin"]
+      rate_limit: "10/hour"
+
+---
+# Document 6: Notification Templates
+---
+notification_templates:
+  welcome_email:
+    subject: "Welcome to {{app_name}}!"
+    body: |
+      Hi {{user_name}},
+      
+      Welcome to {{app_name}}! We're excited to have you on board.
+      
+      Get started by completing your profile.
+      
+      Best regards,
+      The {{app_name}} Team
+    type: email
+    variables:
+      - user_name
+      - app_name
+  
+  password_reset:
+    subject: "Reset Your Password"
+    body: |
+      Hi {{user_name}},
+      
+      You requested to reset your password. Click the link below:
+      
+      {{reset_link}}
+      
+      This link will expire in {{expiry_hours}} hours.
+      
+      If you didn't request this, please ignore this email.
+    type: email
+    variables:
+      - user_name
+      - reset_link
+      - expiry_hours
+  
+  account_locked:
+    subject: "Account Security Alert"
+    body: |
+      Hi {{user_name}},
+      
+      Your account has been temporarily locked due to multiple failed login attempts.
+      
+      Contact support if you need assistance.
+    type: email
+    variables:
+      - user_name
+
+---
+# Document 7: Feature Flags
+---
+feature_flags:
+  # Feature: New Dashboard
+  new_dashboard:
+    enabled: true
+    environments:
+      - development
+      - staging
+    rollout_percentage: 50
+    target_users:
+      - beta_testers
+    description: "New redesigned dashboard interface"
+  
+  # Feature: Payment Integration
+  payment_integration:
+    enabled: true
+    environments:
+      - development
+      - staging
+      - production
+    rollout_percentage: 100
+    description: "Stripe payment gateway integration"
+  
+  # Feature: AI Recommendations
+  ai_recommendations:
+    enabled: false
+    environments:
+      - development
+    rollout_percentage: 0
+    description: "AI-powered content recommendations"
+  
+  # Feature: Dark Mode
+  dark_mode:
+    enabled: true
+    environments:
+      - development
+      - staging
+      - production
+    rollout_percentage: 100
+    description: "Dark theme option for users"
+
+---
+# Document 8: System Metrics and Monitoring
+---
+monitoring:
+  metrics:
+    - name: "request_count"
+      type: counter
+      description: "Total number of HTTP requests"
+      labels:
+        - method
+        - endpoint
+        - status_code
+    
+    - name: "response_time"
+      type: histogram
+      description: "HTTP response time in milliseconds"
+      buckets: [10, 50, 100, 200, 500, 1000, 2000, 5000]
+      labels:
+        - method
+        - endpoint
+    
+    - name: "active_users"
+      type: gauge
+      description: "Number of currently active users"
+  
+  alerts:
+    - name: "high_error_rate"
+      condition: "error_rate > 0.05"
+      duration: "5m"
+      severity: "critical"
+      notification:
+        - email
+        - slack
+      description: "Error rate exceeds 5%"
+    
+    - name: "slow_response_time"
+      condition: "p95_response_time > 2000"
+      duration: "10m"
+      severity: "warning"
+      notification:
+        - slack
+      description: "95th percentile response time exceeds 2 seconds"
+    
+    - name: "database_connection_pool_exhausted"
+      condition: "db_pool_connections == db_pool_max"
+      duration: "2m"
+      severity: "critical"
+      notification:
+        - email
+        - slack
+        - pagerduty
+      description: "Database connection pool is fully utilized"
+
+---
+# Document 9: Cache Configuration
+---
+cache_config:
+  redis:
+    default_ttl: 3600  # 1 hour in seconds
+    max_memory: "1gb"
+    eviction_policy: "allkeys-lru"
+  
+  cache_keys:
+    user_profile:
+      key_pattern: "user:profile:{user_id}"
+      ttl: 1800  # 30 minutes
+      description: "Cached user profile data"
+    
+    session_data:
+      key_pattern: "session:{session_id}"
+      ttl: 86400  # 24 hours
+      description: "User session data"
+    
+    api_response:
+      key_pattern: "api:response:{endpoint}:{params_hash}"
+      ttl: 300  # 5 minutes
+      description: "Cached API responses"
+    
+    product_catalog:
+      key_pattern: "products:catalog"
+      ttl: 7200  # 2 hours
+      description: "Product catalog cache"
+  
+  invalidation_rules:
+    - trigger: "user.update"
+      invalidate:
+        - "user:profile:{user_id}"
+        - "user:preferences:{user_id}"
+    
+    - trigger: "product.update"
+      invalidate:
+        - "products:catalog"
+        - "products:{product_id}"
+
+---
+# Document 10: Localization Strings
+---
+localization:
+  default_language: "en"
+  supported_languages:
+    - code: "en"
+      name: "English"
+      native_name: "English"
+    - code: "es"
+      name: "Spanish"
+      native_name: "Español"
+    - code: "fr"
+      name: "French"
+      native_name: "Français"
+    - code: "de"
+      name: "German"
+      native_name: "Deutsch"
+  
+  translations:
+    en:
+      welcome: "Welcome"
+      login: "Login"
+      logout: "Logout"
+      error_generic: "An error occurred"
+      error_not_found: "Resource not found"
+      success_saved: "Changes saved successfully"
+    
+    es:
+      welcome: "Bienvenido"
+      login: "Iniciar sesión"
+      logout: "Cerrar sesión"
+      error_generic: "Ocurrió un error"
+      error_not_found: "Recurso no encontrado"
+      success_saved: "Cambios guardados exitosamente"
+    
+    fr:
+      welcome: "Bienvenue"
+      login: "Connexion"
+      logout: "Déconnexion"
+      error_generic: "Une erreur s'est produite"
+      error_not_found: "Ressource non trouvée"
+      success_saved: "Modifications enregistrées avec succès"
+

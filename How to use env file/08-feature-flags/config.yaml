@@ -1,0 +1,23 @@
+# ============================================
+# Feature Flags Configuration
+# ============================================
+features:
+  enable_payments: "${ENABLE_PAYMENTS:-false}"
+  enable_analytics: "${ENABLE_ANALYTICS:-true}"
+  enable_beta_features: "${ENABLE_BETA_FEATURES:-false}"
+  enable_new_dashboard: "${ENABLE_NEW_DASHBOARD:-false}"
+  maintenance_mode: "${MAINTENANCE_MODE:-false}"
+
+api:
+  rate_limit: "${API_RATE_LIMIT:-100}"
+  timeout: "${API_TIMEOUT:-30}"
+  max_retries: "${MAX_RETRIES:-3}"
+
+cache:
+  enabled: "${CACHE_ENABLED:-true}"
+  ttl: "${CACHE_TTL:-3600}"
+
+logging:
+  debug_mode: "${DEBUG_MODE:-false}"
+  verbose: "${VERBOSE_LOGGING:-false}"
+

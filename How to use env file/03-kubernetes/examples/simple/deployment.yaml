@@ -1,0 +1,74 @@
+# ============================================
+# Simple Kubernetes Deployment Example
+# ============================================
+# This demonstrates basic usage of environment variables
+# in Kubernetes using ConfigMap and Secret
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simple-app
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: simple-app
+  template:
+    metadata:
+      labels:
+        app: simple-app
+    spec:
+      containers:
+      - name: app
+        image: nginx:alpine
+        
+        # ============================================
+        # Simple Environment Variable Usage
+        # ============================================
+        # Method 1: Direct value (not recommended for production)
+        env:
+        - name: APP_NAME
+          value: "simple-app"
+        
+        # Method 2: From ConfigMap (for non-sensitive config)
+        - name: ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: simple-config
+              key: environment
+        
+        # Method 3: From Secret (for sensitive data)
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: simple-secret
+              key: api-key
+        
+        ports:
+        - containerPort: 80
+
+---
+# ============================================
+# Simple ConfigMap
+# ============================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: simple-config
+data:
+  environment: "development"
+  log-level: "info"
+
+---
+# ============================================
+# Simple Secret
+# ============================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: simple-secret
+type: Opaque
+stringData:
+  api-key: "simple-api-key-123"
+

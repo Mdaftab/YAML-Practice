@@ -1,0 +1,190 @@
+# ============================================
+# YAML Practice: Basic Syntax Examples
+# ============================================
+# This file demonstrates fundamental YAML syntax patterns
+# YAML stands for "YAML Ain't Markup Language"
+
+# ---
+# 1. BASIC KEY-VALUE PAIRS
+# ---
+# Simple key-value pairs (strings)
+name: John Doe
+age: 30
+email: john.doe@example.com
+
+# ---
+# 2. DATA TYPES
+# ---
+# String (can be quoted or unquoted)
+string_example: "Hello World"
+string_unquoted: Hello World
+string_with_special_chars: "Value with: colon & special chars"
+
+# Number (integer)
+integer_example: 42
+negative_number: -10
+
+# Number (float)
+float_example: 3.14159
+scientific_notation: 1.5e-3
+
+# Boolean (true/false, yes/no, on/off)
+boolean_true: true
+boolean_false: false
+boolean_yes: yes
+boolean_no: no
+boolean_on: on
+boolean_off: off
+
+# Null values (null, ~, empty)
+null_value: null
+null_alternative: ~
+empty_value: ""
+
+# ---
+# 3. LISTS (SEQUENCES)
+# ---
+# List with dash notation (recommended)
+fruits:
+  - apple
+  - banana
+  - orange
+  - grape
+
+# List with inline notation
+colors: [red, green, blue, yellow]
+
+# List of numbers
+numbers: [1, 2, 3, 4, 5]
+
+# Mixed list
+mixed_list:
+  - string
+  - 42
+  - true
+  - null
+
+# ---
+# 4. DICTIONARIES (MAPPINGS)
+# ---
+# Simple nested dictionary
+person:
+  name: Jane Smith
+  age: 28
+  city: New York
+
+# Inline dictionary notation
+coordinates: {x: 10, y: 20, z: 30}
+
+# ---
+# 5. NESTED STRUCTURES
+# ---
+# Complex nested structure
+company:
+  name: Tech Corp
+  founded: 2010
+  employees:
+    - name: Alice
+      role: Developer
+      skills:
+        - Python
+        - JavaScript
+        - Docker
+    - name: Bob
+      role: Designer
+      skills:
+        - Photoshop
+        - Figma
+  locations:
+    headquarters:
+      city: San Francisco
+      country: USA
+    branches:
+      - city: London
+        country: UK
+      - city: Tokyo
+        country: Japan
+
+# ---
+# 6. MULTI-LINE STRINGS
+# ---
+# Literal block scalar (preserves newlines and indentation)
+literal_block: |
+  This is a multi-line string
+  that preserves line breaks
+  and indentation.
+  
+  Empty lines are also preserved.
+
+# Folded block scalar (folds newlines into spaces)
+folded_block: >
+  This is a multi-line string
+  that folds line breaks
+  into spaces.
+  Good for long paragraphs.
+
+# ---
+# 7. STRING ESCAPING
+# ---
+# Special characters
+quoted_string: "String with \"quotes\" inside"
+escaped_newline: "Line 1\nLine 2"
+unicode_example: "Hello \u0041\u0042\u0043"
+
+# ---
+# 8. ANCHORS AND ALIASES (REFERENCES)
+# ---
+# Define an anchor (reference point)
+defaults: &defaults
+  timeout: 30
+  retries: 3
+  debug: false
+
+# Use the anchor with alias
+server_config:
+  <<: *defaults  # Merge the defaults
+  host: localhost
+  port: 8080
+
+# Another example
+colors_base: &base_colors
+  primary: blue
+  secondary: green
+
+theme:
+  colors:
+    <<: *base_colors
+  name: "My Theme"
+
+# ---
+# 9. COMMENTS
+# ---
+# This is a comment
+# Comments can appear anywhere in YAML
+# They start with # and continue to end of line
+value: "This line has a value"  # Inline comment
+
+# ---
+# 10. TAGS (EXPLICIT TYPES)
+# ---
+# Force specific types
+string_number: !!str 12345      # String: "12345"
+boolean_string: !!bool "true"   # Boolean: true
+integer_string: !!int "42"      # Integer: 42
+
+# ---
+# 11. QUOTES USAGE
+# ---
+# Single quotes (no escaping except for single quotes)
+single_quoted: 'This is a string with "quotes"'
+
+# Double quotes (allows escaping)
+double_quoted: "This is a string with \"quotes\""
+
+# No quotes (when safe)
+unquoted: This is fine for simple strings
+
+# Quotes needed for special cases
+needs_quotes: "Value with: colon"
+also_needs_quotes: "true"  # To prevent being interpreted as boolean
+

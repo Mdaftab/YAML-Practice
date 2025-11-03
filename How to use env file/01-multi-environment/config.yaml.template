@@ -1,0 +1,47 @@
+# ============================================
+# Multi-Environment Configuration Template
+# ============================================
+# This template uses environment variables that will be
+# substituted with values from .env files for each environment
+
+# Application Configuration
+app:
+  name: "My Application"
+  version: "1.0.0"
+  environment: "${APP_ENV:-development}"
+
+# Server Configuration
+server:
+  host: "${SERVER_HOST:-0.0.0.0}"
+  port: "${SERVER_PORT:-8080}"
+  ssl_enabled: "${SSL_ENABLED:-false}"
+
+# Database Configuration
+database:
+  host: "${DB_HOST}"
+  port: "${DB_PORT:-5432}"
+  name: "${DB_NAME}"
+  username: "${DB_USER}"
+  password: "${DB_PASSWORD}"
+  pool:
+    min: "${DB_POOL_MIN:-5}"
+    max: "${DB_POOL_MAX:-20}"
+
+# API Configuration
+api:
+  base_url: "${API_BASE_URL}"
+  timeout: "${API_TIMEOUT:-30}"
+  key: "${API_KEY}"
+
+# Cache Configuration
+cache:
+  provider: "${CACHE_PROVIDER:-redis}"
+  host: "${CACHE_HOST}"
+  port: "${CACHE_PORT:-6379}"
+  ttl: "${CACHE_TTL:-3600}"
+
+# Logging Configuration
+logging:
+  level: "${LOG_LEVEL:-info}"
+  format: "${LOG_FORMAT:-json}"
+

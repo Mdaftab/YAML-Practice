@@ -1,0 +1,26 @@
+# ============================================
+# Dynamic Configuration with Environment Variables
+# ============================================
+# These values can be changed at runtime via environment variables
+# without redeploying the application
+
+app:
+  maintenance_mode: "${MAINTENANCE_MODE:-false}"
+  max_users: "${MAX_USERS:-1000}"
+  session_timeout: "${SESSION_TIMEOUT:-3600}"
+
+logging:
+  level: "${LOG_LEVEL:-info}"
+  file: "${LOG_FILE:-/var/log/app.log}"
+  max_size: "${LOG_MAX_SIZE:-100mb}"
+
+cache:
+  enabled: "${CACHE_ENABLED:-true}"
+  ttl: "${CACHE_TTL:-3600}"
+  max_memory: "${CACHE_MAX_MEMORY:-256mb}"
+
+api:
+  rate_limit: "${API_RATE_LIMIT:-100}"
+  timeout: "${API_TIMEOUT:-30}"
+  max_retries: "${MAX_RETRIES:-3}"
+

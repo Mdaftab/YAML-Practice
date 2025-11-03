@@ -1,0 +1,126 @@
+# ============================================
+# Development Environment Deployment
+# ============================================
+# This deployment uses development-specific ConfigMaps and Secrets
+# Created from .env.development file
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-dev
+  namespace: development
+  labels:
+    app: myapp
+    environment: development
+spec:
+  replicas: 1  # Fewer replicas for dev
+  selector:
+    matchLabels:
+      app: myapp
+      environment: development
+  template:
+    metadata:
+      labels:
+        app: myapp
+        environment: development
+    spec:
+      containers:
+      - name: app
+        image: myapp:dev-latest
+        imagePullPolicy: IfNotPresent
+        
+        ports:
+        - containerPort: 8080
+        
+        # ============================================
+        # Environment Variables from ConfigMap
+        # ============================================
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: myapp-dev-config
+              key: node-env
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: myapp-dev-config
+              key: log-level
+        - name: API_BASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: myapp-dev-config
+              key: api-base-url
+        - name: DEBUG_MODE
+          valueFrom:
+            configMapKeyRef:
+              name: myapp-dev-config
+              key: debug-mode
+        
+        # ============================================
+        # Secrets from Development Secret
+        # ============================================
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: myapp-dev-secrets
+              key: database-url
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: myapp-dev-secrets
+              key: api-key
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: myapp-dev-secrets
+              key: jwt-secret
+        
+        # ============================================
+        # Load all keys with envFrom
+        # ============================================
+        envFrom:
+        - configMapRef:
+            name: myapp-dev-config
+        - secretRef:
+            name: myapp-dev-secrets
+        
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+
+---
+# ============================================
+# Development ConfigMap
+# ============================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: myapp-dev-config
+  namespace: development
+data:
+  node-env: "development"
+  log-level: "debug"
+  api-base-url: "http://localhost:3000"
+  debug-mode: "true"
+  cache-enabled: "false"
+
+---
+# ============================================
+# Development Secret
+# ============================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: myapp-dev-secrets
+  namespace: development
+type: Opaque
+stringData:
+  database-url: "postgresql://dev_user:dev_password@localhost:5432/myapp_dev"
+  api-key: "dev_api_key_12345"
+  jwt-secret: "dev_jwt_secret_not_secure"
+

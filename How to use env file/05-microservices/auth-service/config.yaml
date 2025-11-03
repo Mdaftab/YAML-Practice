@@ -1,0 +1,29 @@
+# ============================================
+# Auth Service Configuration
+# ============================================
+service:
+  name: auth-service
+  port: "${AUTH_SERVICE_PORT:-3001}"
+  version: "1.0.0"
+
+database:
+  host: "${AUTH_DB_HOST}"
+  port: "${AUTH_DB_PORT:-5432}"
+  name: "${AUTH_DB_NAME}"
+  username: "${AUTH_DB_USER}"
+  password: "${AUTH_DB_PASSWORD}"
+  url: "${AUTH_DB_URL}"
+
+jwt:
+  secret: "${JWT_SECRET}"
+  expiration: "${JWT_EXPIRATION:-3600}"
+  algorithm: "${JWT_ALGORITHM:-HS256}"
+
+redis:
+  host: "${REDIS_HOST:-localhost}"
+  port: "${REDIS_PORT:-6379}"
+  url: "${REDIS_URL}"
+
+logging:
+  level: "${LOG_LEVEL:-info}"
+

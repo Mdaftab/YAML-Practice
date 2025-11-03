@@ -1,0 +1,43 @@
+# ============================================
+# Local Development Configuration
+# ============================================
+# Optimized for local development with defaults
+
+app:
+  name: "My App (Local)"
+  environment: "${NODE_ENV:-development}"
+  debug: "${DEBUG:-true}"
+
+server:
+  host: "${SERVER_HOST:-localhost}"
+  port: "${SERVER_PORT:-3000}"
+  ssl_enabled: false
+
+database:
+  host: "${DB_HOST:-localhost}"
+  port: "${DB_PORT:-5432}"
+  name: "${DB_NAME:-myapp_dev}"
+  username: "${DB_USER:-postgres}"
+  password: "${DB_PASSWORD:-postgres}"
+  url: "${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/myapp_dev}"
+
+api:
+  base_url: "${API_URL:-http://localhost:3000}"
+  key: "${API_KEY:-dev_key_local}"
+  mock_mode: "${MOCK_MODE:-true}"
+
+redis:
+  host: "${REDIS_HOST:-localhost}"
+  port: "${REDIS_PORT:-6379}"
+  url: "${REDIS_URL:-redis://localhost:6379}"
+
+logging:
+  level: "${LOG_LEVEL:-debug}"
+  format: "${LOG_FORMAT:-text}"
+  console: true
+
+features:
+  enable_mock_data: "${ENABLE_MOCK_DATA:-true}"
+  enable_hot_reload: "${ENABLE_HOT_RELOAD:-true}"
+  skip_auth: "${SKIP_AUTH:-false}"
+

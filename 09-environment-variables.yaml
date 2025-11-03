@@ -1,0 +1,568 @@
+# ============================================
+# YAML Practice: Environment Variables in YAML
+# ============================================
+# This file demonstrates different ways to reference
+# environment variables in YAML across various tools and frameworks
+#
+# IMPORTANT: YAML itself doesn't process env variables.
+# The tool/framework that parses the YAML handles the substitution.
+
+---
+# ============================================
+# 1. STANDARD ${VAR} SYNTAX (Most Common)
+# ============================================
+# Used by: Node.js, Python, Java Spring Boot, Docker Compose, etc.
+# This is the most widely supported format
+
+standard_config:
+  # Basic environment variable reference
+  database_host: "${DB_HOST}"
+  database_port: "${DB_PORT}"
+  database_user: "${DB_USER}"
+  database_password: "${DB_PASSWORD}"
+  
+  # With default values (fallback if not set)
+  # Note: Default value support depends on the tool
+  api_timeout: "${API_TIMEOUT:-30}"        # Default: 30
+  log_level: "${LOG_LEVEL:-info}"         # Default: info
+  max_retries: "${MAX_RETRIES:-3}"        # Default: 3
+  
+  # Nested in strings
+  connection_string: "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+  
+  # Multiple variables in one string
+  api_url: "https://${API_DOMAIN}/v${API_VERSION}/endpoint"
+  
+  # In lists
+  allowed_hosts:
+    - "${PRIMARY_HOST}"
+    - "${SECONDARY_HOST}"
+    - "localhost"
+
+---
+# ============================================
+# 2. $VAR SYNTAX (Simpler Form)
+# ============================================
+# Used by: Some Unix tools, shell scripts, some frameworks
+# Note: Can be ambiguous with YAML syntax, so less common
+
+simple_var_syntax:
+  database_host: "$DB_HOST"
+  database_port: "$DB_PORT"
+  api_key: "$API_KEY"
+  
+  # Often needs quotes to avoid YAML parsing issues
+  full_url: "$API_BASE_URL/api/v1/users"
+
+---
+# ============================================
+# 3. DOCKER COMPOSE SYNTAX
+# ============================================
+# Docker Compose supports both ${VAR} and $VAR
+# Also supports ${VAR:-default} for default values
+# And ${VAR?error} for required variables
+
+docker_compose_example:
+  version: '3.8'
+  
+  services:
+    web:
+      image: nginx:alpine
+      environment:
+        # Direct assignment
+        - NODE_ENV=production
+        - PORT=8080
+        
+        # Environment variable substitution
+        - DATABASE_URL=${DATABASE_URL}
+        - REDIS_URL=${REDIS_URL}
+        
+        # With default value
+        - LOG_LEVEL=${LOG_LEVEL:-info}
+        - MAX_CONNECTIONS=${MAX_CONNECTIONS:-100}
+        
+        # Required variable (will error if not set)
+        - API_KEY=${API_KEY?API_KEY environment variable is required}
+        
+        # Alternative syntax
+        - JWT_SECRET=$JWT_SECRET
+      
+      # Using env_file (loads from .env file)
+      env_file:
+        - .env
+        - .env.production
+      
+      # Using environment file with variable substitution
+      env_file:
+        - path: .env.production
+          required: true  # Will fail if file doesn't exist
+
+---
+# ============================================
+# 4. KUBERNETES SYNTAX
+# ============================================
+# Kubernetes uses ConfigMap and Secret references
+# Direct env var substitution is done via ConfigMap/Secret
+
+kubernetes_example:
+  apiVersion: v1
+  kind: Pod
+  
+  spec:
+    containers:
+      - name: app
+        image: myapp:latest
+        
+        # Environment variables from ConfigMap
+        env:
+          # Direct value
+          - name: ENV
+            value: "production"
+          
+          # From ConfigMap key
+          - name: LOG_LEVEL
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: log-level
+          
+          # From Secret (for sensitive data)
+          - name: DATABASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: db-secret
+                key: password
+                optional: false  # Required
+          
+          # From Secret with default
+          - name: API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: api-secret
+                key: api-key
+                optional: true  # Optional, won't fail if missing
+        
+        # Load all keys from ConfigMap as env vars
+        envFrom:
+          - configMapRef:
+              name: app-config
+          - secretRef:
+              name: app-secrets
+
+---
+# ============================================
+# 5. GITHUB ACTIONS SYNTAX
+# ============================================
+# Uses ${{ }} template syntax for expressions
+# Can reference: env, secrets, vars, github context, etc.
+
+github_actions_example:
+  name: CI Pipeline
+  
+  # Define environment variables at workflow level
+  env:
+    NODE_VERSION: '18.x'
+    PYTHON_VERSION: '3.11'
+    REGISTRY: ghcr.io
+    IMAGE_NAME: ${{ github.repository }}
+  
+  jobs:
+    build:
+      runs-on: ubuntu-latest
+      
+      # Job-level environment variables
+      env:
+        BUILD_NUMBER: ${{ github.run_number }}
+        COMMIT_SHA: ${{ github.sha }}
+      
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v3
+        
+        - name: Set up Node.js
+          uses: actions/setup-node@v3
+          with:
+            # Reference workflow-level env var
+            node-version: ${{ env.NODE_VERSION }}
+        
+        - name: Build
+          run: npm run build
+          env:
+            # Step-level environment variables
+            API_URL: ${{ secrets.API_URL }}
+            API_KEY: ${{ secrets.API_KEY }}
+            NODE_ENV: production
+        
+        - name: Deploy
+          run: ./deploy.sh
+          env:
+            # Reference secrets (secure variables)
+            DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+            # Reference variables (non-sensitive)
+            DEPLOY_ENV: ${{ vars.DEPLOY_ENV }}
+            # Reference github context
+            REPO_NAME: ${{ github.repository }}
+            BRANCH: ${{ github.ref_name }}
+
+---
+# ============================================
+# 6. ANSIBLE SYNTAX
+# ============================================
+# Uses {{ variable }} syntax (Jinja2 templating)
+
+ansible_example:
+  - hosts: webservers
+    vars:
+      app_port: "{{ lookup('env', 'APP_PORT') | default('8080') }}"
+      db_host: "{{ lookup('env', 'DB_HOST') }}"
+    
+    tasks:
+      - name: Deploy application
+        template:
+          src: config.yaml.j2
+          dest: /etc/app/config.yaml
+        vars:
+          api_key: "{{ lookup('env', 'API_KEY') }}"
+          secret: "{{ lookup('env', 'SECRET_KEY') }}"
+      
+      - name: Use environment variable
+        shell: echo "{{ ansible_env.HOME }}"
+      
+      - name: Check if variable exists
+        when: "{{ lookup('env', 'REQUIRED_VAR') is defined }}"
+
+---
+# ============================================
+# 7. HELM (KUBERNETES TEMPLATING) SYNTAX
+# ============================================
+# Uses {{ }} syntax with Go templating
+# Can access environment variables via .Values
+
+helm_example:
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: {{ .Values.appName }}
+  spec:
+    template:
+      spec:
+        containers:
+          - name: app
+            image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+            env:
+              # From values.yaml
+              - name: ENV
+                value: {{ .Values.environment | quote }}
+              
+              # From environment
+              - name: NODE_ENV
+                value: "{{ .Values.env.NODE_ENV }}"
+              
+              # Computed value
+              - name: API_URL
+                value: "https://{{ .Values.api.domain }}/{{ .Values.api.version }}"
+
+---
+# ============================================
+# 8. SPRING BOOT (JAVA) SYNTAX
+# ============================================
+# Spring Boot supports ${VAR} and ${VAR:-default}
+# Can also use ${VAR:default} format
+
+spring_boot_example:
+  spring:
+    application:
+      name: ${APP_NAME:myapp}
+    
+    datasource:
+      url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME}
+      username: ${DB_USER:postgres}
+      password: ${DB_PASSWORD:}
+      driver-class-name: org.postgresql.Driver
+    
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+    
+  server:
+    port: ${SERVER_PORT:8080}
+  
+  logging:
+    level:
+      root: ${LOG_LEVEL:INFO}
+      com.example: ${LOG_LEVEL:DEBUG}
+
+---
+# ============================================
+# 9. ENVSUBST PATTERN (Unix Tool)
+# ============================================
+# envsubst replaces ${VAR} or $VAR with actual values
+# Used in shell scripts and CI/CD pipelines
+
+envsubst_template:
+  # Template file (config.yaml.template)
+  app:
+    name: "${APP_NAME}"
+    version: "${APP_VERSION}"
+    environment: "${ENV:-development}"
+  
+  database:
+    host: "${DB_HOST}"
+    port: "${DB_PORT}"
+    name: "${DB_NAME}"
+    user: "${DB_USER}"
+    password: "${DB_PASSWORD}"
+  
+  api:
+    base_url: "${API_BASE_URL}"
+    timeout: "${API_TIMEOUT:-30}"
+    key: "${API_KEY}"
+  
+  # Usage:
+  # envsubst < config.yaml.template > config.yaml
+  # or
+  # export DB_HOST=localhost && envsubst < config.yaml.template
+
+---
+# ============================================
+# 10. PYTHON (PYYAML + OS.ENVIRON)
+# ============================================
+# Python example showing how to process env vars
+# This is how Python apps typically handle YAML with env vars
+
+python_example:
+  # YAML file with env var placeholders
+  database:
+    host: "${DB_HOST}"
+    port: "${DB_PORT}"
+    username: "${DB_USER}"
+    password: "${DB_PASSWORD}"
+  
+  api:
+    key: "${API_KEY}"
+    secret: "${API_SECRET}"
+  
+  # Python code to process this:
+  # import os
+  # import yaml
+  # import re
+  #
+  # def replace_env_vars(text):
+  #     def replace(match):
+  #         var = match.group(1)
+  #         default = match.group(2) if match.lastindex > 1 else None
+  #         return os.environ.get(var, default) if default else os.environ.get(var, '')
+  #     
+  #     pattern = r'\$\{([^}:]+)(?::([^}]+))?\}'
+  #     return re.sub(pattern, replace, text)
+  #
+  # with open('config.yaml', 'r') as f:
+  #     content = replace_env_vars(f.read())
+  #     config = yaml.safe_load(content)
+
+---
+# ============================================
+# 11. NODE.JS (CONFIG LIBRARIES)
+# ============================================
+# Node.js libraries like node-config, dotenv, etc.
+
+nodejs_example:
+  # config/default.yaml
+  app:
+    name: "${APP_NAME}"
+    port: "${PORT:-3000}"
+    env: "${NODE_ENV:-development}"
+  
+  database:
+    connection: "${DATABASE_URL}"
+    # Or individual fields
+    host: "${DB_HOST}"
+    port: "${DB_PORT}"
+    name: "${DB_NAME}"
+  
+  # Usage with node-config:
+  # const config = require('config');
+  # // Automatically loads from process.env
+  #
+  # Usage with dotenv:
+  # require('dotenv').config();
+  # const yaml = require('js-yaml');
+  # const fs = require('fs');
+  # const config = yaml.load(fs.readFileSync('config.yaml', 'utf8'));
+
+---
+# ============================================
+# 12. COMPLEX PATTERNS
+# ============================================
+# Advanced patterns combining multiple techniques
+
+complex_patterns:
+  # Conditional values based on environment
+  database:
+    # Use different hosts based on environment
+    host: "${DB_HOST_${ENV:-dev}}"
+    # Would expand to: DB_HOST_prod, DB_HOST_dev, etc.
+  
+  # Multiple fallbacks
+  api:
+    base_url: "${API_URL_${ENV}}"
+    timeout: "${API_TIMEOUT:-${DEFAULT_TIMEOUT:-30}}"
+    # Falls back to DEFAULT_TIMEOUT, then to 30
+  
+  # Environment-specific configuration
+  environments:
+    development:
+      debug: "${DEBUG:-true}"
+      log_level: "${LOG_LEVEL:-debug}"
+    
+    staging:
+      debug: "${DEBUG:-false}"
+      log_level: "${LOG_LEVEL:-info}"
+    
+    production:
+      debug: "${DEBUG:-false}"
+      log_level: "${LOG_LEVEL:-warn}"
+  
+  # Composite values
+  urls:
+    api: "${PROTOCOL:-https}://${DOMAIN}/api/v${API_VERSION}"
+    web: "${PROTOCOL:-https}://${DOMAIN}"
+    admin: "${PROTOCOL:-https}://admin.${DOMAIN}"
+
+---
+# ============================================
+# 13. BEST PRACTICES
+# ============================================
+# Patterns and recommendations
+
+best_practices:
+  # ✅ DO: Use quotes around env var references
+  good_example_1: "${DB_HOST}"
+  
+  # ❌ DON'T: Bare variable (can cause parsing issues)
+  # bad_example_1: ${DB_HOST}
+  
+  # ✅ DO: Provide default values when possible
+  good_example_2: "${LOG_LEVEL:-info}"
+  
+  # ✅ DO: Document required variables
+  required_variables:
+    # These must be set before running the application:
+    - DB_HOST
+    - DB_PASSWORD
+    - API_KEY
+  
+  # ✅ DO: Use consistent naming conventions
+  naming_conventions:
+    # Use UPPERCASE with underscores
+    database_host: "${DB_HOST}"
+    api_key: "${API_KEY}"
+    jwt_secret: "${JWT_SECRET}"
+  
+  # ✅ DO: Group related variables
+  grouped_variables:
+    database:
+      host: "${DB_HOST}"
+      port: "${DB_PORT}"
+      name: "${DB_NAME}"
+    api:
+      key: "${API_KEY}"
+      secret: "${API_SECRET}"
+      url: "${API_URL}"
+  
+  # ✅ DO: Validate required variables in your code
+  # Example validation:
+  # if not os.environ.get('DB_HOST'):
+  #     raise ValueError("DB_HOST environment variable is required")
+
+---
+# ============================================
+# 14. SECURITY CONSIDERATIONS
+# ============================================
+# Important security practices
+
+security_notes:
+  # ✅ DO: Never commit secrets to version control
+  # ✅ DO: Use secret management tools
+  # ✅ DO: Use .env files with .gitignore
+  # ✅ DO: Rotate secrets regularly
+  
+  # Example .gitignore entries:
+  gitignore_patterns:
+    - ".env"
+    - ".env.local"
+    - ".env.*.local"
+    - "*.secret.yaml"
+    - "secrets/"
+  
+  # ✅ DO: Use different values per environment
+  environment_specific:
+    development:
+      # Can use simple values for dev
+      api_key: "${DEV_API_KEY:-dev-key-123}"
+    production:
+      # Must use real secrets in production
+      api_key: "${PROD_API_KEY}"  # Required, no default
+  
+  # ✅ DO: Validate variable formats
+  validation_examples:
+    # Email format validation
+    admin_email: "${ADMIN_EMAIL}"  # Should validate format
+    # URL format validation
+    api_url: "${API_URL}"  # Should validate URL format
+    # Port range validation
+    server_port: "${PORT:-8080}"  # Should be 1-65535
+
+---
+# ============================================
+# 15. TOOL-SPECIFIC EXAMPLES SUMMARY
+# ============================================
+
+tool_comparison:
+  docker_compose:
+    syntax: "${VAR}" or "${VAR:-default}"
+    example: "DATABASE_URL=${DATABASE_URL}"
+    notes: "Automatic substitution in environment section"
+  
+  kubernetes:
+    syntax: "valueFrom: secretKeyRef or configMapKeyRef"
+    example: |
+      env:
+        - name: KEY
+          valueFrom:
+            secretKeyRef:
+              name: secret-name
+              key: key-name
+    notes: "Uses ConfigMap/Secret resources, not direct env vars"
+  
+  github_actions:
+    syntax: "${{ env.VAR }}" or "${{ secrets.VAR }}"
+    example: "node-version: ${{ env.NODE_VERSION }}"
+    notes: "Template syntax with context variables"
+  
+  ansible:
+    syntax: "{{ lookup('env', 'VAR') }}"
+    example: "port: {{ lookup('env', 'PORT') | default('8080') }}"
+    notes: "Jinja2 templating with filters"
+  
+  helm:
+    syntax: "{{ .Values.var }}"
+    example: "image: {{ .Values.image.repository }}"
+    notes: "Go templating with Values object"
+  
+  spring_boot:
+    syntax: "${VAR}" or "${VAR:-default}"
+    example: "port: ${SERVER_PORT:8080}"
+    notes: "Automatic resolution from application.properties/yaml"
+  
+  python:
+    syntax: "${VAR}" (requires manual processing)
+    example: "Process with os.environ.get() or python-dotenv"
+    notes: "Need to parse and substitute manually or use library"
+  
+  nodejs:
+    syntax: "${VAR}" (requires processing)
+    example: "Use dotenv, node-config, or manual substitution"
+    notes: "Libraries handle substitution automatically"
+

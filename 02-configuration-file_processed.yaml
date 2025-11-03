@@ -1,0 +1,154 @@
+# ============================================
+# YAML Practice: Application Configuration File
+# ============================================
+# This demonstrates a typical application configuration file
+# Common pattern for web applications, databases, APIs, etc.
+
+# Application Metadata
+app:
+  name: "My Awesome Application"
+  version: "1.2.3"
+  environment: production  # Options: development, staging, production
+  debug: false
+
+# Server Configuration
+server:
+  host: "0.0.0.0"           # Listen on all interfaces
+  port: 8080                 # HTTP port
+  ssl:
+    enabled: true
+    certificate_path: "/etc/ssl/certs/app.crt"
+    private_key_path: "/etc/ssl/private/app.key"
+  timeout: 30                # Request timeout in seconds
+  max_connections: 1000
+
+# Database Configuration
+database:
+  # Primary database
+  primary:
+    type: postgresql
+    host: "db.example.com"
+    port: 5432
+    name: "myapp_production"
+    username: "myuser"      # Environment variable reference
+    password: "mypassword"  # Environment variable reference
+    pool:
+      min: 5
+      max: 20
+      idle_timeout: 30000       # milliseconds
+  
+  # Read replica for read-heavy operations
+  replica:
+    type: postgresql
+    host: "db-replica.example.com"
+    port: 5432
+    name: "myapp_production"
+    username: "myuser"
+    password: "mypassword"
+
+# Cache Configuration
+cache:
+  provider: redis
+  host: "redis.example.com"
+  port: 6379
+  database: 0
+  ttl: 3600                    # Time to live in seconds
+  max_memory: "256mb"
+
+# Logging Configuration
+logging:
+  level: info                  # Options: debug, info, warn, error
+  format: json                 # Options: json, text
+  output:
+    - type: file
+      path: "/var/log/app/app.log"
+      max_size: "100mb"
+      backups: 5
+    - type: console
+      enabled: true
+
+# External Services (API Integrations)
+services:
+  # Payment gateway
+  payment:
+    provider: stripe
+    api_key: ""
+    webhook_secret: ""
+    timeout: 30
+  
+  # Email service
+  email:
+    provider: sendgrid
+    api_key: ""
+    from_address: "noreply@example.com"
+    templates:
+      welcome: "welcome-email-template"
+      reset_password: "reset-password-template"
+  
+  # File storage
+  storage:
+    provider: s3
+    bucket: "app-uploads"
+    region: "us-east-1"
+    access_key: ""
+    secret_key: ""
+
+# Feature Flags
+features:
+  enable_new_dashboard: true
+  enable_beta_features: false
+  enable_analytics: true
+  maintenance_mode: false
+
+# Rate Limiting
+rate_limiting:
+  enabled: true
+  requests_per_minute: 60
+  requests_per_hour: 1000
+  whitelist:
+    - "192.168.1.0/24"
+    - "10.0.0.1"
+
+# Security Settings
+security:
+  jwt:
+    secret: ""
+    expiration: 3600           # seconds
+    algorithm: HS256
+  cors:
+    allowed_origins:
+      - "https://example.com"
+      - "https://www.example.com"
+    allowed_methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+    allowed_headers:
+      - Content-Type
+      - Authorization
+
+# Monitoring & Health Checks
+monitoring:
+  health_check:
+    enabled: true
+    endpoint: "/health"
+    interval: 30               # seconds
+  metrics:
+    enabled: true
+    endpoint: "/metrics"
+    port: 9090
+  
+# Notification Settings
+notifications:
+  email:
+    enabled: true
+    smtp:
+      host: "smtp.example.com"
+      port: 587
+      username: ""
+      password: ""
+  slack:
+    enabled: false
+    webhook_url: ""
+

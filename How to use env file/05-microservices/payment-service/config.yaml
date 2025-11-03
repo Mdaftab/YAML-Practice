@@ -1,0 +1,26 @@
+# ============================================
+# Payment Service Configuration
+# ============================================
+service:
+  name: payment-service
+  port: "${PAYMENT_SERVICE_PORT:-3002}"
+  version: "1.0.0"
+
+stripe:
+  api_key: "${STRIPE_API_KEY}"
+  webhook_secret: "${STRIPE_WEBHOOK_SECRET}"
+  timeout: "${STRIPE_TIMEOUT:-30}"
+
+database:
+  host: "${PAYMENT_DB_HOST}"
+  port: "${PAYMENT_DB_PORT:-5432}"
+  name: "${PAYMENT_DB_NAME}"
+  username: "${PAYMENT_DB_USER}"
+  password: "${PAYMENT_DB_PASSWORD}"
+
+logging:
+  level: "${LOG_LEVEL:-info}"
+
+notification:
+  webhook_url: "${NOTIFICATION_WEBHOOK_URL}"
+
